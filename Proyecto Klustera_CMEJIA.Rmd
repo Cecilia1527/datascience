@@ -1,0 +1,150 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+install.packages("datos")
+
+---
+title: "Proyecto Klustera"
+date: 2020-11-13
+output: html_document
+---
+Instalación de paquetes para Ejercicio de KNN
+---
+```{r, echo = FALSE}
+library(C50)
+library(gmodels)
+library(dplyr)
+library(ggplot2)
+require(class)
+require(gmodels)
+require(dplyr)
+library(tidyverse)
+
+
+dir1 <- "C:\\Users\\Dis22442\\Documents\\DREVF\\klustera\\klustera"
+tempo1 <- read.csv(paste(dir1, "e.csv", sep="/"), stringsAsFactors = TRUE)
+
+
+
+str(tempo1)
+tempo1 <- tempo1[-1]
+str(tempo1)
+
+
+tempo1$visitor <- factor(tempo1$visitor, levels = c("true", "false"), 
+                         labels = c("visitante", "NOvisitante"))
+
+round(prop.table(table(tempo1$visitor)) * 100, digits = 1)
+
+summary(tempo1[c("tiempodeses", "day_tz", "hour_tz")])
+
+
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+tempo1_n <- as.data.frame(lapply(tempo1[c(4,6,8)], normalize)) 
+head(tempo1_n)
+
+nfilas <- floor(nrow(tempo1_n)) * .80
+set.seed(123)
+index <- sample(1:nrow(tempo1_n), nfilas) 
+tempo1_train <- tempo1_n[index, ] 
+tempo1_test <- tempo1_n[-index, ]
+
+tempo1_train_labels <- tempo1[index, 7]
+tempo1_test_labels <- tempo1[-index,7]
+str(tempo1_train_labels)
+
+
+tempo1_test_pred <- knn(train = tempo1_train, test = tempo1_test, cl = tempo1_train_labels, k = 200)  
+CrossTable(x = tempo1_test_labels, y = tempo1_test_pred, prop.r=FALSE, prop.chisq = FALSE)
+
+
+
+dir2 <- "C:\\Users\\Dis22442\\Documents\\DREVF\\klustera\\klustera"
+tempo2 <- read.csv(paste(dir2, "v.csv", sep="/"), stringsAsFactors = TRUE)
+
+str(tempo2)
+
+tempo2 <- tempo2[-1]
+str(tempo2)
+
+tempo2$visitor <- visitor
+
+tempo2 <- tempo2[-1]
+str(tempo2)
+tempo2=cbind(tempo1, visitor =rep("visitor", 249556))
+str(tempo2)
+
+
+summary(tempo2[c("tiempodeses", "day_tz", "hour_tz")])
+
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+tempo2_n <- as.data.frame(lapply(tempo2[c(4,6,8)], normalize)) 
+head(tempo2_n)
+
+
+nfilas <- floor(nrow(tempo2_n)) * .80
+set.seed(123)
+index <- sample(1:nrow(tempo2_n), nfilas)
+tempo2_train <- tempo2_n[1:8100 , -7] 
+tempo2_test <- tempo2_n[81001:90000, -7 ] 
+
+tempo2_train_labels <- tempo2[index, 7]
+tempo2_test_labels <- tempo2[-index,7]
+str(tempo2_train_labels)
+
+
+CrossTable(x = tempo2_test_labels, y = tempo2_test_pred, prop.r=FALSE, prop.chisq = FALSE)
+
+tempo2$visitor <- tempo2_test_pred
+
+write.csv(tempo2, paste(dir1, "new_v.csv", sep = "/"), fileEncoding = "UTF-8")
+
+```
+
+KURSERA EJERCICIO DE PREGUNTAS
+Dias de la mayor número de visitantes
+ 
+
+```{r, echo = FALSE}
+dir2 <- "C:\\Users\\Dis22442\\Documents\\DREVF\\klustera\\klustera"
+data <- read.csv(paste(dir2, "e.csv", sep="/"))
+
+data$visitor
+tempo <- data %>%
+  filter(visitor == "true") %>%
+  group_by(day_of_week_tz) %>%
+  count()
+
+gr <- ggplot(data, aes(x=day_of_week_tz, y= TRUE)) + geom_bar(stat = "identity")
+
+ggsave(paste(dir2, "23.png", sep="/"), plot=gr, width=12, height = 12)
+paste(dir2, "23.png", sep="/")
+
+
+```
+Meses con mayor número de visitantes
+```{r, echo = FALSE}
+
+data$visitor
+tempo <- data %>%
+  filter(visitor == TRUE) %>%
+  group_by(month_tz) %>%
+  count(TRUE)
+
+gr <- ggplot(data, aes(x=month_tz, y= visitor)) + geom_bar(stat = "identity")
+
+ggsave(paste(dir2, "24.png", sep="/"), plot=gr, width=12, height = 12)
+paste(dir2, "24.png", sep="/")
+
+```
+
+
+
